@@ -46,7 +46,6 @@ namespace upc {
     case HAMMING:
       /// \TODO Implement the Hamming window
       /** \DONE Ventana de Hamming*/
-      //window.assign(frameLen, 1); //Se tiene que hacer LA DE HAMMING IGUALMENTE
       for(i=0;i<frameLen;i++){
         window[i]=a0 - a1*cos((2*M_PI*i)/(frameLen-1));
       }
@@ -73,10 +72,10 @@ namespace upc {
     /// \TODO Implement a rule to decide whether the sound is voiced or not.
     /// * You can use the standard features (pot, r1norm, rmaxnorm),
     ///   or compute and use other ones.
-    /** \DONE Para que un sonido sea considerado sonoro decimos que se debe cumplir:
-              - Potencia > -64 dB
-              - Relación R[1]/R[0] > 0,53
-              - 0,36
+    /** \DONE Para que un sonido sea considerado sonoro decimos que se debe cumplir una de estas condiciones:
+              - Potencia < -73 dB
+              - Relación R[1]/R[0] < 0,53
+              - Relación R[Npitch]/R[0] < 0,37
               */
 
     return pot < -73 or r1norm < 0.53 or rmaxnorm < 0.37;
