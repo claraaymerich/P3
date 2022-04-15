@@ -12,13 +12,31 @@ namespace upc {
 
     for (unsigned int l = 0; l < r.size(); ++l) {
   		/// \TODO Compute the autocorrelation r[l]
+      /**
+      \DONE Autocorrelation computated
+      - Autocorrelation set to 0
+      - Autocorrelation acumulated for all the signal
+      - Autocorrelation divided by length
+      */
+      r[l] = 0;
+      for(unsigned int n = l; n < x.size(); n++){
+        r[l] += x[n]*x[n-l]; 
+      }
+      r[l] /= x.size();
     }
 
     if (r[0] == 0.0F) //to avoid log() and divide zero 
       r[0] = 1e-10; 
+
   }
 
   void PitchAnalyzer::set_window(Window win_type) {
+    unsigned int i;
+    float a0, a1;
+
+    a0 = 25/46.;
+    a1 = 1- a0;
+
     if (frameLen == 0)
       return;
 
@@ -27,6 +45,11 @@ namespace upc {
     switch (win_type) {
     case HAMMING:
       /// \TODO Implement the Hamming window
+      /** \DONE Ventana de Hamming*/
+      //window.assign(frameLen, 1); //Se tiene que hacer LA DE HAMMING IGUALMENTE
+      for(i=0;i<frameLen;i++){
+        window[i]=a0 - a1*cos((2*M_PI*i)/(frameLen-1));
+      }
       break;
     case RECT:
     default:
@@ -50,7 +73,13 @@ namespace upc {
     /// \TODO Implement a rule to decide whether the sound is voiced or not.
     /// * You can use the standard features (pot, r1norm, rmaxnorm),
     ///   or compute and use other ones.
-    return true;
+    /** \DONE Para que un sonido sea considerado sonoro decimos que se debe cumplir:
+              - Potencia > -64 dB
+              - Relación R[1]/R[0] > 0,53
+              - 0,36
+              */
+
+    return pot < -73 or r1norm < 0.53 or rmaxnorm < 0.37;
   }
 
   float PitchAnalyzer::compute_pitch(vector<float> & x) const {
@@ -76,6 +105,9 @@ namespace upc {
     ///	   .
 	/// In either case, the lag should not exceed that of the minimum value of the pitch.
 
+  for(iR=iRMax=r.begin()+npitch_min;iR<r.begin()+npitch_max;iR++){
+    if(*iR>*iRMax) iRMax=iR;
+  }
     unsigned int lag = iRMax - r.begin();
 
     float pot = 10 * log10(r[0]);
@@ -89,8 +121,8 @@ namespace upc {
 #endif
     
     if (unvoiced(pot, r[1]/r[0], r[lag]/r[0]))
-      return 0;
+      return 0; //indica trama sorda.
     else
-      return (float) samplingFreq/(float) lag;
+      return (float) samplingFreq/(float) lag; //trama sonora, devolvemos la frecuencia de pitch.
   }
 }

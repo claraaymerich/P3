@@ -7,8 +7,8 @@
 #include <algorithm>
 
 namespace upc {
-  const float MIN_F0 = 20.0F;    ///< Minimum value of pitch in Hertzs
-  const float MAX_F0 = 10000.0F; ///< Maximum value of pitch in Hertzs
+  const float MIN_F0 = 50.0F;    ///< Minimum value of pitch in Hertzs
+  const float MAX_F0 = 500.0F; ///< Maximum value of pitch in Hertzs
 
   ///
   /// PitchAnalyzer: class that computes the pitch (in Hz) from a signal frame.
@@ -30,12 +30,13 @@ namespace upc {
       samplingFreq, ///< sampling rate (in samples per second). Has to be set in the constructor call
       npitch_min, ///< minimum value of pitch period, in samples
       npitch_max; ///< maximum value of pitch period, in samples
+      float umaxnorm;
  
 	///
 	/// Computes correlation from lag=0 to r.size()
 	///
+  //Pueden haber /// o //* o /** ... */ es para que lo meta en el doc.
     void autocorrelation(const std::vector<float> &x, std::vector<float> &r) const;
-
 	///
 	/// Returns the pitch (in Hz) of input frame x
 	///
@@ -50,13 +51,15 @@ namespace upc {
   public:
     PitchAnalyzer(	unsigned int fLen,			///< Frame length in samples
 					unsigned int sFreq,			///< Sampling rate in Hertzs
-					Window w=PitchAnalyzer::HAMMING,	///< Window type
+          float umaxnorm_,
+					Window w=PitchAnalyzer::RECT,	///< Window type
 					float min_F0 = MIN_F0,		///< Pitch range should be restricted to be above this value
-					float max_F0 = MAX_F0		///< Pitch range should be restricted to be below this value
+					float max_F0 = MAX_F0   	///< Pitch range should be restricted to be below this value
 				 )
 	{
       frameLen = fLen;
       samplingFreq = sFreq;
+      umaxnorm=umaxnorm_;
       set_f0_range(min_F0, max_F0);
       set_window(w);
     }
