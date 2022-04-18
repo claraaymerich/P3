@@ -14,28 +14,22 @@ Ejercicios básicos
   `get_pitch`.
 
    * Complete el cálculo de la autocorrelación e inserte a continuación el código correspondiente.
-   void PitchAnalyzer::autocorrelation(const vector<float> &x, vector<float> &r) const {
+  
+ 	 void PitchAnalyzer::autocorrelation(const vector<float> &x, vector<float> &r) const {
+   	 for (unsigned int l = 0; l < r.size(); ++l) {
+  			
+    	  r[l] = 0;
+     	 for(unsigned int n = l; n < x.size(); n++){
+      	  r[l] += x[n]*x[n-l]; 
+      	}
+    	  r[l] /= x.size();
+   	 }
 
-    for (unsigned int l = 0; l < r.size(); ++l) {
-  		/// \TODO Compute the autocorrelation r[l]
-      /**
-      \DONE Autocorrelation computated
-      - Autocorrelation set to 0
-      - Autocorrelation acumulated for all the signal
-      - Autocorrelation divided by length
-      */
-      r[l] = 0;
-      for(unsigned int n = l; n < x.size(); n++){
-        r[l] += x[n]*x[n-l]; 
-      }
-      r[l] /= x.size();
-    }
+    	if (r[0] == 0.0F) //to avoid log() and divide zero 
+     	 r[0] = 1e-10; 
+ 	 }
 
-    if (r[0] == 0.0F) //to avoid log() and divide zero 
-      r[0] = 1e-10; 
-
-  }
-
+	
    * Inserte una gŕafica donde, en un *subplot*, se vea con claridad la señal temporal de un segmento de
      unos 30 ms de un fonema sonoro y su periodo de pitch; y, en otro *subplot*, se vea con claridad la
 	 autocorrelación de la señal y la posición del primer máximo secundario.
@@ -43,68 +37,64 @@ Ejercicios básicos
 	 NOTA: es más que probable que tenga que usar Python, Octave/MATLAB u otro programa semejante para
 	 hacerlo. Se valorará la utilización de la biblioteca matplotlib de Python.
 
+	![image](https://user-images.githubusercontent.com/100692201/163852288-df69c60a-da27-4222-8361-feae2b5e1725.png)
+
+	
    * Determine el mejor candidato para el periodo de pitch localizando el primer máximo secundario de la
      autocorrelación. Inserte a continuación el código correspondiente.
 
 	float PitchAnalyzer::compute_pitch(vector<float> & x) const {
-    if (x.size() != frameLen)
-      return -1.0F;
+    		if (x.size() != frameLen)
+     		 return -1.0F;
 
-    //Window input frame
-    for (unsigned int i=0; i<x.size(); ++i)
-      x[i] *= window[i];
+   	 //Window input frame
+   	 for (unsigned int i=0; i<x.size(); ++i)
+    	  x[i] *= window[i];
 
-    vector<float> r(npitch_max);
+    	vector<float> r(npitch_max);
 
-    //Compute correlation
-    autocorrelation(x, r);
+    	//Compute correlation
+    	autocorrelation(x, r);
 
-    vector<float>::const_iterator iR = r.begin(), iRMax = iR;
+    	vector<float>::const_iterator iR = r.begin(), iRMax = iR;
+	
+  	for(iR=iRMax=r.begin()+npitch_min;iR<r.begin()+npitch_max;iR++){
+   	 if(*iR>*iRMax) iRMax=iR;
+  	}
+   	 unsigned int lag = iRMax - r.begin();
 
-    /// \TODO 
-	/// Find the lag of the maximum value of the autocorrelation away from the origin.<br>
-	/// Choices to set the minimum value of the lag are:
-	///    - The first negative value of the autocorrelation.
-	///    - The lag corresponding to the maximum value of the pitch.
-    ///	   .
-	/// In either case, the lag should not exceed that of the minimum value of the pitch.
+    	float pot = 10 * log10(r[0]);
 
-  for(iR=iRMax=r.begin()+npitch_min;iR<r.begin()+npitch_max;iR++){
-    if(*iR>*iRMax) iRMax=iR;
-  }
-    unsigned int lag = iRMax - r.begin();
-
-    float pot = 10 * log10(r[0]);
-
-    //You can print these (and other) features, look at them using wavesurfer
-    //Based on that, implement a rule for unvoiced
-    //change to #if 1 and compile
-#if 0
-    if (r[0] > 0.0F)
-      cout << pot << '\t' << r[1]/r[0] << '\t' << r[lag]/r[0] << endl;
-#endif
-    //false si es sonora --> devolvemos la frequencia correspondiente al max de la autoorrelacion
-    //true si es sorda
-    if (unvoiced(pot, r[1]/r[0], r[lag]/r[0]))
-      return 0; //indica trama sorda.
-    else
-      return (float) samplingFreq/(float) lag; //trama sonora, devolvemos la frecuencia de pitch.
-  }
+    	//You can print these (and other) features, look at them using wavesurfer
+    	//Based on that, implement a rule for unvoiced
+    	//change to #if 1 and compile
+	#if 0
+   	 if (r[0] > 0.0F)
+     	 cout << pot << '\t' << r[1]/r[0] << '\t' << r[lag]/r[0] << endl;
+	#endif
+    	//false si es sonora --> devolvemos la frequencia correspondiente al max de la autoorrelacion
+    	//true si es sorda
+    	if (unvoiced(pot, r[1]/r[0], r[lag]/r[0]))
+     	 return 0; //indica trama sorda.
+   	 else
+      	return (float) samplingFreq/(float) lag; //trama sonora, devolvemos la frecuencia de pitch.
+ 	 }
+	
+	
 	
    * Implemente la regla de decisión sonoro o sordo e inserte el código correspondiente.
 	
-	bool PitchAnalyzer::unvoiced(float pot, float r1norm, float rmaxnorm) const {
-    /// \TODO Implement a rule to decide whether the sound is voiced or not.
-    /// * You can use the standard features (pot, r1norm, rmaxnorm),
-    ///   or compute and use other ones.
-    /** \DONE Para que un sonido sea considerado sonoro decimos que se debe cumplir una de estas condiciones:
+	  /// \TODO Implement a rule to decide whether the sound is voiced or not.
+   	 /// * You can use the standard features (pot, r1norm, rmaxnorm),
+    	///   or compute and use other ones.
+    	/** \DONE Para que un sonido sea considerado sonoro decimos que se debe cumplir una de estas condiciones:
               - Potencia < -73 dB
               - Relación R[1]/R[0] < 0,53
               - Relación R[Npitch]/R[0] < 0,37
               */
-
-    return pot < -73 or r1norm < 0.53 or rmaxnorm < 0.37;
-  }
+	bool PitchAnalyzer::unvoiced(float pot, float r1norm, float rmaxnorm) const {
+   		 return pot < -73 or r1norm < 0.53 or rmaxnorm < 0.37;
+ 	 }
 	
 
 - Una vez completados los puntos anteriores, dispondrá de una primera versión del estimador de pitch. El 
@@ -122,8 +112,8 @@ Ejercicios básicos
 
 	    Recuerde configurar los paneles de datos para que el desplazamiento de ventana sea el adecuado, que
 		en esta práctica es de 15 ms.
-	![image](https://user-images.githubusercontent.com/100692201/163821300-83e9a546-2bce-4c72-83b2-dbc158f2ade2.png)
-
+	![image](https://user-images.githubusercontent.com/100692201/163853095-8e5cd436-0ea5-49c6-982d-15c8d06bed89.png)
+	Aqui podemos observar una grafica con la waveform, otra con el contorno del pitch hecho directament por el wavesurfer y la potencia de la señal.
 
       - Use el estimador de pitch implementado en el programa `wavesurfer` en una señal de prueba y compare
 	    su resultado con el obtenido por la mejor versión de su propio sistema.  Inserte una gráfica
@@ -181,24 +171,24 @@ Ejercicios de ampliación
 	Hemos implementado dos mejoras para mejorar los errores: un filtro de center-clipping y un filtro de mediana
 	
 	/// \TODO
-  /// Postprocess the estimation in order to supress errors. For instance, a median filter
-  /// or time-warping may be used.
-  /// \DONE Postprocess, filtro de mediana.
+  	/// Postprocess the estimation in order to supress errors. For instance, a median filter
+  	/// or time-warping may be used.
+ 	 /// \DONE Postprocess, filtro de mediana.
 
-  std::vector<float> aux(f0);
-  unsigned int j;
-  float mn2, mx2;
+ 	 std::vector<float> aux(f0);
+ 	 unsigned int j;
+  	float mn2, mx2;
 
-  for(j=2;j<aux.size()-1;j++){
-    mn2=min(min(aux[j-1],aux[j]),aux[j+1]);
-    mx2=max(max(aux[j-1],aux[j]),aux[j+1]);
-    f0[j]=aux[j-1]+aux[j]+aux[j+1]-mn2-mx2;
-    printf("%f\t",aux[j-1]);
-    printf("%f\t",aux[j]);
-    printf("%f\t",aux[j+1]);
-    printf("%f\n",f0[j]);
+  	for(j=2;j<aux.size()-1;j++){
+   	 mn2=min(min(aux[j-1],aux[j]),aux[j+1]);
+    	mx2=max(max(aux[j-1],aux[j]),aux[j+1]);
+    	f0[j]=aux[j-1]+aux[j]+aux[j+1]-mn2-mx2;
+    	printf("%f\t",aux[j-1]);
+   	 printf("%f\t",aux[j]);
+   	 printf("%f\t",aux[j+1]);
+    	printf("%f\n",f0[j]);
 
-  }
+  	}
 
   También se valorará la realización de un estudio de los parámetros involucrados. Por ejemplo, si se opta
   por implementar el filtro de mediana, se valorará el análisis de los resultados obtenidos en función de
