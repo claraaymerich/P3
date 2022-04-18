@@ -15,6 +15,28 @@ Ejercicios básicos
 
    * Complete el cálculo de la autocorrelación e inserte a continuación el código correspondiente.
 
+void PitchAnalyzer::autocorrelation(const vector<float> &x, vector<float> &r) const {
+
+    for (unsigned int l = 0; l < r.size(); ++l) {
+  		/// \TODO Compute the autocorrelation r[l]
+      /**
+      \DONE Autocorrelation computated
+      - Autocorrelation set to 0
+      - Autocorrelation acumulated for all the signal
+      - Autocorrelation divided by length
+      */
+      r[l] = 0;
+      for(unsigned int n = l; n < x.size(); n++){
+        r[l] += x[n]*x[n-l]; 
+      }
+      r[l] /= x.size();
+    }
+
+    if (r[0] == 0.0F) //to avoid log() and divide zero 
+      r[0] = 1e-10; 
+
+  }
+
    * Inserte una gŕafica donde, en un *subplot*, se vea con claridad la señal temporal de un segmento de
      unos 30 ms de un fonema sonoro y su periodo de pitch; y, en otro *subplot*, se vea con claridad la
 	 autocorrelación de la señal y la posición del primer máximo secundario.
@@ -25,7 +47,69 @@ Ejercicios básicos
    * Determine el mejor candidato para el periodo de pitch localizando el primer máximo secundario de la
      autocorrelación. Inserte a continuación el código correspondiente.
 
+float PitchAnalyzer::compute_pitch(vector<float> & x) const {
+    if (x.size() != frameLen)
+      return -1.0F;
+
+    //Window input frame
+    for (unsigned int i=0; i<x.size(); ++i)
+      x[i] *= window[i];
+
+    vector<float> r(npitch_max);
+
+    //Compute correlation
+    autocorrelation(x, r);
+
+    vector<float>::const_iterator iR = r.begin(), iRMax = iR;
+
+    /// \TODO 
+	/// Find the lag of the maximum value of the autocorrelation away from the origin.<br>
+	/// Choices to set the minimum value of the lag are:
+	///    - The first negative value of the autocorrelation.
+	///    - The lag corresponding to the maximum value of the pitch.
+    ///	   .
+	/// In either case, the lag should not exceed that of the minimum value of the pitch.
+
+  for(iR=iRMax=r.begin()+npitch_min;iR<r.begin()+npitch_max;iR++){
+    if(*iR>*iRMax) iRMax=iR;
+  }
+    unsigned int lag = iRMax - r.begin();
+
+    float pot = 10 * log10(r[0]);
+
+    //You can print these (and other) features, look at them using wavesurfer
+    //Based on that, implement a rule for unvoiced
+    //change to #if 1 and compile
+#if 0
+    if (r[0] > 0.0F)
+      cout << pot << '\t' << r[1]/r[0] << '\t' << r[lag]/r[0] << endl;
+#endif
+    //false si es sonora --> devolvemos la frequencia correspondiente al max de la autoorrelacion
+    //true si es sorda
+    if (unvoiced(pot, r[1]/r[0], r[lag]/r[0]))
+      return 0; //indica trama sorda.
+    else
+      return (float) samplingFreq/(float) lag; //trama sonora, devolvemos la frecuencia de pitch.
+  }
+	
+	
    * Implemente la regla de decisión sonoro o sordo e inserte el código correspondiente.
+	
+	bool PitchAnalyzer::unvoiced(float pot, float r1norm, float rmaxnorm) const {
+    /// \TODO Implement a rule to decide whether the sound is voiced or not.
+    /// * You can use the standard features (pot, r1norm, rmaxnorm),
+    ///   or compute and use other ones.
+    /** \DONE Para que un sonido sea considerado sonoro decimos que se debe cumplir una de estas condiciones:
+              - Potencia < -73 dB
+              - Relación R[1]/R[0] < 0,53
+              - Relación R[Npitch]/R[0] < 0,37
+              */
+
+    return pot < -73 or r1norm < 0.53 or rmaxnorm < 0.37;
+  }
+	
+	
+	
 
 - Una vez completados los puntos anteriores, dispondrá de una primera versión del estimador de pitch. El 
   resto del trabajo consiste, básicamente, en obtener las mejores prestaciones posibles con él.
@@ -46,9 +130,12 @@ Ejercicios básicos
       - Use el estimador de pitch implementado en el programa `wavesurfer` en una señal de prueba y compare
 	    su resultado con el obtenido por la mejor versión de su propio sistema.  Inserte una gráfica
 		ilustrativa del resultado de ambos estimadores.
+	![image](https://user-images.githubusercontent.com/100692201/163806402-b8219750-51fb-4970-be66-35c897423744.png)
+
      
 		Aunque puede usar el propio Wavesurfer para obtener la representación, se valorará
 	 	el uso de alternativas de mayor calidad (particularmente Python).
+	
   
   * Optimice los parámetros de su sistema de estimación de pitch e inserte una tabla con las tasas de error
     y el *score* TOTAL proporcionados por `pitch_evaluate` en la evaluación de la base de datos 
