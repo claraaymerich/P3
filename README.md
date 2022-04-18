@@ -15,19 +15,17 @@ Ejercicios básicos
 
    * Complete el cálculo de la autocorrelación e inserte a continuación el código correspondiente.
   
- 	 void PitchAnalyzer::autocorrelation(const vector<float> &x, vector<float> &r) const {
-   	 for (unsigned int l = 0; l < r.size(); ++l) {
-  			
-    	  r[l] = 0;
-     	 for(unsigned int n = l; n < x.size(); n++){
-      	  r[l] += x[n]*x[n-l]; 
-      	}
-    	  r[l] /= x.size();
-   	 }
-
-    	if (r[0] == 0.0F) //to avoid log() and divide zero 
-     	 r[0] = 1e-10; 
- 	 }
+ 	
+  		 void PitchAnalyzer::autocorrelation(const vector<float> &x, vector<float> &r) const {
+   	 		for (unsigned int l = 0; l < r.size(); ++l) {	
+    	 		 r[l] = 0;
+     	 		for(unsigned int n = l; n < x.size(); n++){
+      	 		 r[l] += x[n]*x[n-l]; 
+      			}
+    	  		r[l] /= x.size();}
+		     if (r[0] == 0.0F) //to avoid log() and divide zero 
+     		 r[0] = 1e-10; 
+ 		 }
 
 	
    * Inserte una gŕafica donde, en un *subplot*, se vea con claridad la señal temporal de un segmento de
@@ -43,6 +41,7 @@ Ejercicios básicos
    * Determine el mejor candidato para el periodo de pitch localizando el primer máximo secundario de la
      autocorrelación. Inserte a continuación el código correspondiente.
 
+	
 	float PitchAnalyzer::compute_pitch(vector<float> & x) const {
     		if (x.size() != frameLen)
      		 return -1.0F;
@@ -50,7 +49,6 @@ Ejercicios básicos
    	 //Window input frame
    	 for (unsigned int i=0; i<x.size(); ++i)
     	  x[i] *= window[i];
-
     	vector<float> r(npitch_max);
 
     	//Compute correlation
